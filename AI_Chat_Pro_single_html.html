@@ -53,7 +53,7 @@ textarea{flex:1;min-width:0;max-height:150px;resize:none;border:0;outline:0;back
 </div>
 <script>
 const $=s=>document.querySelector(s), messages=[], box=$("#messages"), welcome=$("#welcome"), input=$("#prompt"), send=$("#send"), statusEl=$("#status");
-const saved=localStorage.getItem("ai_backend_url");if(saved)$("#apiUrl").value=saved;
+const DEFAULT_BACKEND_URL="https://open-ai-1-n6n3.onrender.com";const saved=localStorage.getItem("ai_backend_url")||DEFAULT_BACKEND_URL;$("#apiUrl").value=saved;
 $("#apiUrl").addEventListener("change",()=>localStorage.setItem("ai_backend_url",$("#apiUrl").value.trim().replace(/\/+$/,"")));
 function add(role,text){if(welcome)welcome.style.display="none";const row=document.createElement("div");row.className="msg "+(role==="assistant"?"ai":"user");const av=document.createElement("div");av.className="avatar";av.textContent=role==="user"?"You":"✳";const body=document.createElement("div");body.className="body";const who=document.createElement("div");who.className="who";who.textContent=role==="user"?"You":"AI Chat Pro";const content=document.createElement("div");content.textContent=text;body.append(who,content);row.append(av,body);box.append(row);box.scrollTop=box.scrollHeight;return content}
 async function ask(text){text=text.trim();if(!text||send.disabled)return;const base=$("#apiUrl").value.trim().replace(/\/+$/,"");if(!base){alert("প্রথমে Backend URL সেট করো। Backend অনলাইনে deploy করে URL বসাতে হবে।");return}
