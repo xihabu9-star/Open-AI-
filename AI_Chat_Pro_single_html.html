@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101010">
+<title>AI Chat Pro</title>
+<style>
+:root{color-scheme:dark;--bg:#212121;--panel:#171717;--surface:#303030;--border:#484848;--text:#eee;--muted:#aaa}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.app{height:100dvh;display:flex;flex-direction:column;max-width:900px;margin:auto}
+header{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #383838}
+.brand{font-weight:700;font-size:18px}.tag{font-size:11px;border:1px solid #555;border-radius:7px;padding:3px 7px;color:#bbb;margin-left:6px}
+#status{font-size:12px;color:#aaa}
+#messages{flex:1;overflow:auto;padding:20px 14px 10px}
+.welcome{text-align:center;max-width:580px;margin:10vh auto 0}.logo{font-size:42px}.welcome h1{font-size:28px;margin:8px 0}.welcome p{color:var(--muted)}
+.suggestions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:24px}
+.suggestions button{background:transparent;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:left}
+.msg{max-width:720px;margin:0 auto 22px;display:flex;gap:12px;align-items:flex-start}.avatar{width:30px;height:30px;flex:none;border-radius:50%;background:#3d3d3d;display:grid;place-items:center;font-size:12px}
+.msg.ai .avatar{background:#28523d}.body{flex:1;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}.who{font-size:12px;color:#aaa;margin-bottom:4px;font-weight:650}
+.composer-wrap{padding:10px 12px 15px}.composer{max-width:760px;margin:auto;display:flex;gap:9px;align-items:flex-end;background:var(--surface);border:1px solid #555;border-radius:17px;padding:10px 10px 10px 14px}
+textarea{flex:1;min-width:0;max-height:150px;resize:none;border:0;outline:0;background:transparent;color:var(--text);font:inherit;padding:7px 0}
+#send{width:40px;height:40px;border:0;border-radius:12px;background:#eee;color:#111;font-size:23px}#send:disabled{opacity:.5}
+.note{text-align:center;color:#888;font-size:10px;margin:8px 0 0}
+.error{color:#ffaaa5}.settings{max-width:760px;margin:0 auto 8px;padding:0 12px}.settings details{font-size:12px;color:#aaa}.settings input{width:100%;margin-top:7px;padding:10px;background:#292929;color:#eee;border:1px solid #555;border-radius:9px}
+@media(max-width:520px){.suggestions{grid-template-columns:1fr}.welcome{margin-top:7vh}.welcome h1{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand">✳ AI Chat Pro <span class="tag">AI</span></div><div id="status">Backend not checked</div></header>
+<main id="messages">
+<section class="welcome" id="welcome">
+<div class="logo">✳</div><h1>কী জানতে চাও?</h1><p>প্রশ্ন লিখে পাঠাও। AI তোমাকে সাহায্য করবে।</p>
+<div class="suggestions">
+<button data-prompt="কৃত্রিম বুদ্ধিমত্তা কী সহজ ভাষায় বুঝিয়ে বলো">AI সহজভাবে বুঝিয়ে বলো</button>
+<button data-prompt="আমাকে একটি সুন্দর CV লেখায় সাহায্য করো">CV লিখতে সাহায্য করো</button>
+<button data-prompt="JavaScript শেখার ৩০ দিনের পরিকল্পনা দাও">JavaScript শেখার পরিকল্পনা</button>
+<button data-prompt="একটি ছোট ব্যবসার আইডিয়া দাও">ব্যবসার আইডিয়া দাও</button>
+</div>
+</section>
+</main>
+<div class="settings">
+<details><summary>Backend URL সেটিংস</summary>
+<input id="apiUrl" type="url" placeholder="https://your-server.example.com">
+<p>এখানে তোমার হোস্ট করা Backend-এর ঠিকানা দাও। শেষে /api/chat যোগ করবে না; অ্যাপ নিজে যোগ করবে।</p>
+</details>
+</div>
+<div class="composer-wrap">
+<form class="composer" id="form"><textarea id="prompt" rows="1" placeholder="এখানে মেসেজ লিখো..." required></textarea><button id="send" type="submit">↑</button></form>
+<p class="note">AI ভুল করতে পারে। গুরুত্বপূর্ণ তথ্য যাচাই করো।</p>
+</div>
+</div>
+<script>
+const $=s=>document.querySelector(s), messages=[], box=$("#messages"), welcome=$("#welcome"), input=$("#prompt"), send=$("#send"), statusEl=$("#status");
+const saved=localStorage.getItem("ai_backend_url");if(saved)$("#apiUrl").value=saved;
+$("#apiUrl").addEventListener("change",()=>localStorage.setItem("ai_backend_url",$("#apiUrl").value.trim().replace(/\/+$/,"")));
+function add(role,text){if(welcome)welcome.style.display="none";const row=document.createElement("div");row.className="msg "+(role==="assistant"?"ai":"user");const av=document.createElement("div");av.className="avatar";av.textContent=role==="user"?"You":"✳";const body=document.createElement("div");body.className="body";const who=document.createElement("div");who.className="who";who.textContent=role==="user"?"You":"AI Chat Pro";const content=document.createElement("div");content.textContent=text;body.append(who,content);row.append(av,body);box.append(row);box.scrollTop=box.scrollHeight;return content}
+async function ask(text){text=text.trim();if(!text||send.disabled)return;const base=$("#apiUrl").value.trim().replace(/\/+$/,"");if(!base){alert("প্রথমে Backend URL সেট করো। Backend অনলাইনে deploy করে URL বসাতে হবে।");return}
+messages.push({role:"user",content:text});add("user",text);input.value="";input.style.height="auto";send.disabled=true;const pending=add("assistant","উত্তর তৈরি হচ্ছে…");
+try{statusEl.textContent="Connecting…";const r=await fetch(base+"/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||"Backend request failed ("+r.status+")");const reply=data.reply||"কোনো উত্তর পাওয়া যায়নি।";pending.textContent=reply;messages.push({role:"assistant",content:reply});statusEl.textContent="Connected"}
+catch(e){pending.textContent=e.message+" — Backend URL ও সার্ভার চালু আছে কি না পরীক্ষা করো।";pending.classList.add("error");messages.pop();statusEl.textContent="Connection error"}
+finally{send.disabled=false;input.focus();box.scrollTop=box.scrollHeight}}
+$("#form").addEventListener("submit",e=>{e.preventDefault();ask(input.value)});
+input.addEventListener("input",()=>{input.style.height="auto";input.style.height=Math.min(input.scrollHeight,150)+"px"});
+document.querySelectorAll("[data-prompt]").forEach(b=>b.addEventListener("click",()=>ask(b.dataset.prompt)));
+</script>
+</body>
+</html>
